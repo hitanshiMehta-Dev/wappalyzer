@@ -10,7 +10,14 @@ const {
   resolve,
   getTechnology,
 } = Wappalyzer
-const { agent, promisify, getOption, setOption, open, globEscape } = Utils
+const {
+  agent,
+  promisify,
+  getChromeStorageValue,
+  setChromeStorageValue,
+  open,
+  globEscape,
+} = Utils
 
 const expiry = 1000 * 60 * 60 * 24
 
@@ -42,7 +49,7 @@ const Driver = {
   async init() {
     await Driver.loadTechnologies()
 
-    const hostnameCache = await getOption('hostnames', {})
+    const hostnameCache = await getChromeStorageValue('hostnames', {})
 
     Driver.cache = {
       hostnames: Object.keys(hostnameCache).reduce(
@@ -69,7 +76,7 @@ const Driver = {
         {}
       ),
       tabs: {},
-      robots: await getOption('robots', {}),
+      robots: await getChromeStorageValue('robots', {}),
       ads: [],
     }
 
@@ -113,8 +120,8 @@ const Driver = {
     chrome.runtime.onMessage.addListener(Driver.onMessage)
 
     const { version } = chrome.runtime.getManifest()
-    const previous = await getOption('version')
-    const upgradeMessage = await getOption('upgradeMessage', true)
+    const previous = await getChromeStorageValue('version')
+    const upgradeMessage = await getChromeStorageValue('upgradeMessage', true)
 
     if (previous === null) {
       open(
@@ -127,7 +134,7 @@ const Driver = {
       )
     }
 
-    await setOption('version', version)
+    await setChromeStorageValue('version', version)
   },
 
   /**
@@ -525,7 +532,9 @@ const Driver = {
     try {
       const { hostname } = new URL(url)
 
-      return (await getOption('disabledDomains', [])).includes(hostname)
+      return (await getChromeStorageValue('disabledDomains', [])).includes(
+        hostname
+      )
     } catch (error) {
       return false
     }
@@ -605,7 +614,7 @@ const Driver = {
       {}
     )
 
-    await setOption(
+    await setChromeStorageValue(
       'hostnames',
       Object.keys(Driver.cache.hostnames).reduce(
         (hostnames, hostname) => ({
@@ -696,9 +705,9 @@ const Driver = {
       technologies = []
     }
 
-    const dynamicIcon = await getOption('dynamicIcon', false)
-    const showCached = await getOption('showCached', true)
-    const badge = await getOption('badge', true)
+    const dynamicIcon = await getChromeStorageValue('dynamicIcon', false)
+    const showCached = await getChromeStorageValue('showCached', true)
+    const badge = await getChromeStorageValue('badge', true)
 
     let icon = 'default.svg'
 
@@ -708,7 +717,10 @@ const Driver = {
     )
 
     if (dynamicIcon) {
-      const pinnedCategory = parseInt(await getOption('pinnedCategory'), 10)
+      const pinnedCategory = parseInt(
+        await getChromeStorageValue('pinnedCategory'),
+        10
+      )
 
       const pinned = _technologies.find(({ categories }) =>
         categories.some(({ id }) => id === pinnedCategory)
@@ -780,7 +792,7 @@ const Driver = {
       return
     }
 
-    const showCached = await getOption('showCached', true)
+    const showCached = await getChromeStorageValue('showCached', true)
 
     const resolved = (Driver.cache.tabs[id] || []).filter(
       ({ cached }) => showCached || cached === false
@@ -798,7 +810,7 @@ const Driver = {
    */
   async getRobots(hostname, secure = false) {
     if (
-      !(await getOption('tracking', true)) ||
+      !(await getChromeStorageValue('tracking', true)) ||
       hostnameIgnoreList.test(hostname)
     ) {
       return []
@@ -859,7 +871,7 @@ const Driver = {
           {}
         )
 
-      await setOption('robots', Driver.cache.robots)
+      await setChromeStorageValue('robots', Driver.cache.robots)
 
       return Driver.cache.robots[hostname]
     } catch (error) {
@@ -897,7 +909,7 @@ const Driver = {
 
     xhrAnalyzed = {}
 
-    await setOption('hostnames', {})
+    await setChromeStorageValue('hostnames', {})
   },
 
   /**
@@ -905,9 +917,10 @@ const Driver = {
    * This function can be disabled in the extension settings
    */
   async ping() {
-    const tracking = await getOption('tracking', true)
+    const tracking = await getChromeStorageValue('tracking', true)
     const termsAccepted =
-      agent === 'chrome' || (await getOption('termsAccepted', false))
+      agent === 'chrome' ||
+      (await getChromeStorageValue('termsAccepted', false))
 
     if (tracking && termsAccepted) {
       const urls = Object.keys(Driver.cache.hostnames).reduce(
@@ -952,7 +965,7 @@ const Driver = {
           urls,
         })
 
-        await setOption('hostnames', (Driver.cache.hostnames = {}))
+        await setChromeStorageValue('hostnames', (Driver.cache.hostnames = {}))
 
         Driver.lastPing = Date.now()
       }

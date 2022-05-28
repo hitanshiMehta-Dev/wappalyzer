@@ -41,7 +41,7 @@ const Utils = {
    * @param {String} name
    * @param {string|mixed|null} defaultValue
    */
-  async getOption(name, defaultValue = null) {
+  async getChromeStorageValue(name, defaultValue = null) {
     try {
       const option = await Utils.promisify(chrome.storage.local, 'get', name)
 
@@ -61,7 +61,7 @@ const Utils = {
    * @param {String} name
    * @param {String} value
    */
-  async setOption(name, value) {
+  async setChromeStorageValue(name, value) {
     try {
       await Utils.promisify(chrome.storage.local, 'set', {
         [name]: value,

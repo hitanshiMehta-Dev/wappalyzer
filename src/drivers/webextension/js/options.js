@@ -2,7 +2,7 @@
 /* eslint-env browser */
 /* globals Utils, chrome */
 
-const { agent, i18n, getOption, setOption } = Utils
+const { agent, i18n, getChromeStorageValue, setChromeStorageValue } = Utils
 
 const Options = {
   /**
@@ -10,7 +10,8 @@ const Options = {
    */
   async init() {
     const termsAccepted =
-      agent === 'chrome' || (await getOption('termsAccepted', false))
+      agent === 'chrome' ||
+      (await getChromeStorageValue('termsAccepted', false))
 
     ;[
       ['upgradeMessage', true],
@@ -30,14 +31,14 @@ const Options = {
 
       if (el.type === 'checkbox') {
         el.checked =
-          !!(await getOption(option, defaultValue)) &&
+          !!(await getChromeStorageValue(option, defaultValue)) &&
           (option !== 'tracking' || termsAccepted)
 
         el.addEventListener('click', async () => {
-          await setOption(option, !!el.checked)
+          await setChromeStorageValue(option, !!el.checked)
         })
       } else if (el.type === 'password') {
-        el.value = await getOption(option, defaultValue)
+        el.value = await getChromeStorageValue(option, defaultValue)
       }
     })
 
@@ -46,7 +47,8 @@ const Options = {
       .parentNode.querySelector('input')
       .addEventListener(
         'input',
-        async (event) => await setOption('apiKey', event.target.value)
+        async (event) =>
+          await setChromeStorageValue('apiKey', event.target.value)
       )
 
     document

@@ -108,7 +108,7 @@
       allowedByRobotsTxt(details, ifCallback, elseCallback)
     }
 
-    Utils.getOption('tracking', true).then(function (tracking) {
+    Utils.getChromeStorageValue('tracking', true).then(function (tracking) {
       if (tracking) {
         fullIfCallback()
       } else {
@@ -252,11 +252,12 @@
     },
   }
 
-  PageNetworkTrafficCollector.prototype.sendLogMessageToTabConsole = function () {
-    const logMessage = Array.from(arguments).join(' ')
-    const message = { message: logMessage, event: 'console-log-message' }
-    chrome.tabs.sendMessage(this.tabId, message)
-  }
+  PageNetworkTrafficCollector.prototype.sendLogMessageToTabConsole =
+    function () {
+      const logMessage = Array.from(arguments).join(' ')
+      const message = { message: logMessage, event: 'console-log-message' }
+      chrome.tabs.sendMessage(this.tabId, message)
+    }
 
   PageNetworkTrafficCollector.prototype.sendToTab = function (
     assetReq,
@@ -355,9 +356,8 @@
 
     const request = this.requests[details.requestId]
     if (request) {
-      const redirParent = this.allRedirects[
-        this.getRedirKey(details.url, details.frameId)
-      ]
+      const redirParent =
+        this.allRedirects[this.getRedirKey(details.url, details.frameId)]
       let header =
         request && findHeader(details.responseHeaders, 'content-type')
       const contentType = header && header.value.toLowerCase()
@@ -542,7 +542,8 @@
   PageNetworkTrafficCollector.prototype.parseYoutubeVideoIdFromUrl = function (
     url
   ) {
-    let re = /^https?:\/\/www\.youtube\.com\/get_video_info.*(?:\?|&)video_id=(.*?)(?:$|&)/
+    let re =
+      /^https?:\/\/www\.youtube\.com\/get_video_info.*(?:\?|&)video_id=(.*?)(?:$|&)/
     let match = re.exec(url)
     if (match && match.length > 1) {
       return match[1]

@@ -2,8 +2,15 @@
 /* eslint-env browser */
 /* globals chrome, Utils */
 
-const { agent, open, i18n, getOption, setOption, promisify, sendMessage } =
-  Utils
+const {
+  agent,
+  open,
+  i18n,
+  getChromeStorageValue,
+  setChromeStorageValue,
+  promisify,
+  sendMessage,
+} = Utils
 
 const baseUrl = 'https://www.wappalyzer.com'
 const utm = '?utm_source=popup&utm_medium=extension&utm_campaign=wappalyzer'
@@ -287,17 +294,17 @@ const Popup = {
     }, {})
 
     // Disabled domains
-    const dynamicIcon = await getOption('dynamicIcon', false)
+    const dynamicIcon = await getChromeStorageValue('dynamicIcon', false)
 
     if (dynamicIcon) {
       el.body.classList.add('dynamic-icon')
     }
 
     // Disabled domains
-    let disabledDomains = await getOption('disabledDomains', [])
+    let disabledDomains = await getChromeStorageValue('disabledDomains', [])
 
     // Dark mode
-    const theme = await getOption('theme', 'light')
+    const theme = await getChromeStorageValue('theme', 'light')
 
     if (theme === 'dark') {
       el.body.classList.add('dark')
@@ -307,7 +314,8 @@ const Popup = {
 
     // Terms
     const termsAccepted =
-      agent === 'chrome' || (await getOption('termsAccepted', false))
+      agent === 'chrome' ||
+      (await getChromeStorageValue('termsAccepted', false))
 
     if (termsAccepted) {
       el.terms.classList.add('terms--hidden')
@@ -321,8 +329,8 @@ const Popup = {
       el.tabPlus.classList.add('tab--disabled')
 
       el.termsButtonAccept.addEventListener('click', async () => {
-        await setOption('termsAccepted', true)
-        await setOption('tracking', true)
+        await setChromeStorageValue('termsAccepted', true)
+        await setChromeStorageValue('tracking', true)
 
         el.terms.classList.add('terms--hidden')
         el.footer.classList.remove('footer--hidden')
@@ -332,8 +340,8 @@ const Popup = {
       })
 
       el.termsButtonDecline.addEventListener('click', async () => {
-        await setOption('termsAccepted', true)
-        await setOption('tracking', false)
+        await setChromeStorageValue('termsAccepted', true)
+        await setChromeStorageValue('tracking', false)
 
         el.terms.classList.add('terms--hidden')
         el.footer.classList.remove('footer--hidden')
@@ -365,7 +373,7 @@ const Popup = {
             (_hostname) => _hostname !== hostname
           )
 
-          await setOption('disabledDomains', disabledDomains)
+          await setChromeStorageValue('disabledDomains', disabledDomains)
 
           setDisabledDomain(false)
 
@@ -375,7 +383,7 @@ const Popup = {
         el.headerSwitchEnabled.addEventListener('click', async () => {
           disabledDomains.push(hostname)
 
-          await setOption('disabledDomains', disabledDomains)
+          await setChromeStorageValue('disabledDomains', disabledDomains)
 
           setDisabledDomain(true)
 
@@ -391,10 +399,10 @@ const Popup = {
     }
 
     // Plus configuration
-    el.plusConfigureApiKey.value = await getOption('apiKey', '')
+    el.plusConfigureApiKey.value = await getChromeStorageValue('apiKey', '')
 
     el.plusConfigureSave.addEventListener('click', async (event) => {
-      await setOption('apiKey', el.plusConfigureApiKey.value)
+      await setChromeStorageValue('apiKey', el.plusConfigureApiKey.value)
 
       await Popup.getPlus(url)
     })
@@ -407,7 +415,7 @@ const Popup = {
     // Theme
     el.headerThemes.forEach((headerTheme) =>
       headerTheme.addEventListener('click', async () => {
-        const theme = await getOption('theme', 'light')
+        const theme = await getChromeStorageValue('theme', 'light')
 
         el.body.classList[theme === 'dark' ? 'remove' : 'add']('dark')
         el.body.classList[theme === 'dark' ? 'add' : 'remove']('light')
@@ -418,7 +426,10 @@ const Popup = {
           'header__icon--hidden'
         )
 
-        await setOption('theme', theme === 'dark' ? 'light' : 'dark')
+        await setChromeStorageValue(
+          'theme',
+          theme === 'dark' ? 'light' : 'dark'
+        )
       })
     )
 
@@ -457,7 +468,7 @@ const Popup = {
     el.footerButtonText.textContent = item.buttonText
     el.footerButtonLink.href = item.buttonLink
 
-    const collapseFooter = await getOption('collapseFooter', false)
+    const collapseFooter = await getChromeStorageValue('collapseFooter', false)
 
     if (collapseFooter) {
       el.footer.classList.add('footer--collapsed')
@@ -476,7 +487,7 @@ const Popup = {
         'footer__toggle--hidden'
       )
 
-      await setOption('collapseFooter', !collapsed)
+      await setChromeStorageValue('collapseFooter', !collapsed)
     })
 
     Array.from(document.querySelectorAll('a')).forEach((a) =>
@@ -568,7 +579,7 @@ const Popup = {
       el.detections.removeChild(detections.firstChild)
     }
 
-    const pinnedCategory = await getOption('pinnedCategory')
+    const pinnedCategory = await getChromeStorageValue('pinnedCategory')
 
     const categorised = Popup.categorise(detections)
 
@@ -591,16 +602,16 @@ const Popup = {
 
       el.pins.forEach((pin) =>
         pin.addEventListener('click', async () => {
-          const pinnedCategory = await getOption('pinnedCategory')
+          const pinnedCategory = await getChromeStorageValue('pinnedCategory')
 
           el.pinsActive.forEach((pin) =>
             pin.classList.remove('category__pin--active')
           )
 
           if (pinnedCategory === id) {
-            await setOption('pinnedCategory', null)
+            await setChromeStorageValue('pinnedCategory', null)
           } else {
-            await setOption('pinnedCategory', id)
+            await setChromeStorageValue('pinnedCategory', id)
 
             el.pins.forEach((pin) => pin.classList.add('category__pin--active'))
           }
@@ -667,7 +678,7 @@ const Popup = {
    * @param {String} url
    */
   async getPlus(url) {
-    const apiKey = await getOption('apiKey', '')
+    const apiKey = await getChromeStorageValue('apiKey', '')
 
     const el = {
       loading: document.querySelector('.loading'),

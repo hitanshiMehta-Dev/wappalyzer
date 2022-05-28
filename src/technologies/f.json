@@ -513,7 +513,7 @@
     "js": {
       "FilePond": "",
       "FilePond.create": "",
-      "FilePond.setOptions": ""
+      "FilePond.setChromeStorageValues": ""
     },
     "scriptSrc": "filepond.js",
     "website": "https://pqina.nl/filepond/"
